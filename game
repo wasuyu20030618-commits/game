@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプルなブラックジャック</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #2c5836; /* ダークグリーン */
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #1a4220;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        .hand {
+            margin-bottom: 20px;
+            border: 2px dashed #66bb6a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .cards {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+            min-height: 100px;
+            flex-wrap: wrap;
+        }
+        .card {
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #000;
+            border-radius: 5px;
+            width: 70px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0 5px;
+            padding: 5px;
+            font-size: 1.2em;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+        }
+        .card.hidden {
+            background-color: #f00;
+            color: #fff;
+            font-size: 1em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-style: italic;
+        }
+        .card-suit {
+            font-size: 0.8em;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+        #hitButton { background-color: #ff9800; color: #fff; }
+        #hitButton:hover { background-color: #e68900; }
+        #standButton { background-color: #4caf50; color: #fff; }
+        #standButton:hover { background-color: #43a047; }
+        #dealButton { background-color: #2196f3; color: #fff; }
+        #dealButton:hover { background-color: #1e88e5; }
+        #message {
+            font-size: 1.5em;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ブラックジャック</h1>
+    <p>カードの合計が21を超えないようにディーラーより21に近づけましょう！</p>
+    
+    <div id="dealerHand" class="hand">
+        <h2>ディーラーの手札: <span id="dealerScore">0</span></h2>
+        <div id="dealerCards" class="cards"></div>
+    </div>
+
+    <div id="playerHand" class="hand">
+        <h2>あなたの手札: <span id="playerScore">0</span></h2>
+        <div id="playerCards" class="cards"></div>
+    </div>
+
+    <div id="buttons">
+        <button id="dealButton">ゲーム開始</button>
+        <button id="hitButton" disabled>ヒット (カードを引く)</button>
+        <button id="standButton" disabled>スタンド (勝負)</button>
+    </div>
+
+    <div id="message"></div>
+</div>
+
+<script>
+    // ----------------------------------------------------
+    //  ゲームのロジック
+    // ----------------------------------------------------
+    
+    // HTML要素の取得
+    const dealerCardsEl = document.getElementById('dealerCards');
+    const playerCardsEl = document.getElementById('playerCards');
+    const dealerScoreEl = document.getElementById('dealerScore');
+    const playerScoreEl = document.getElementById('playerScore');
+    const messageEl = document.getElementById('message');
+    const dealButton = document.getElementById('dealButton');
+    const hitButton = document.getElementById('hitButton');
+    const standButton = document.getElementById('standButton');
+
+    // カードとゲームの状態
+    let deck = [];
+    let dealerHand = [];
+    let playerHand = [];
+    let isGameOver = true;
+    
+    // カードの定義
+    const suits = ['♠', '♥', '♦', '♣'];
+    const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+    /**
+     * デッキを初期化し、シャッフルする
+     */
+    function createAndShuffleDeck() {
+        deck = [];
+        for (let suit of suits) {
+            for (let value of values) {
+                deck.push({ suit, value });
+            }
+        }
+        // Fisher-Yatesシャッフルアルゴリズム
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+    }
+
+    /**
+     * デッキからカードを1枚引く
+     */
+    function drawCard() {
+        return deck.pop();
+    }
+
+    /**
+     * カードの点数を計算する
+     * @param {Array} hand - 手札の配列
+     * @returns {number} - 合計点
+     */
+    function calculateScore(hand) {
+        let score = 0;
+        let hasAce = 0;
+
+        for (let card of hand) {
+            if (['K', 'Q', 'J'].includes(card.value)) {
+                score += 10;
+            } else if (card.value === 'A') {
+                score += 11;
+                hasAce++;
+            } else {
+                score += parseInt(card.value);
+            }
+        }
+
+        // A (エース) の調整 (11点から1点に変更)
+        while (score > 21 && hasAce > 0) {
+            score -= 10;
+            hasAce--;
+        }
+        return score;
+    }
+
+    /**
+     * カードをHTMLで表示する
+     * @param {Object} card - カードオブジェクト
+     * @param {boolean} isHidden - 裏向きにするか
+     * @returns {string} - カードのHTML文字列
+     */
+    function getCardHtml(card, isHidden = false) {
+        if (isHidden) {
+            return `<div class="card hidden">DEALER<br>CARD</div>`;
+        }
+        const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+        return `
+            <div class="card" style="color: ${color};">
+                <div class="card-value">${card.value}</div>
+                <div class="card-suit" style="font-size: 1.5em;">${card.suit}</div>
+                <div class="card-value">${card.value}</div>
+            </div>
+        `;
+    }
+
+    /**
+     * 手札を画面に描画する
+     */
+    function renderHands(hideDealerFirst = true) {
+        dealerCardsEl.innerHTML = dealerHand.map((card, index) => 
+            getCardHtml(card, hideDealerFirst && index === 0)
+        ).join('');
+        playerCardsEl.innerHTML = playerHand.map(card => getCardHtml(card)).join('');
+
+        const dealerScore = calculateScore(dealerHand);
+        const playerScore = calculateScore(playerHand);
+        
+        // ディーラーの点数は、裏向きのカードがある場合は表示しない
+        dealerScoreEl.textContent = hideDealerFirst ? '?' : dealerScore;
+        playerScoreEl.textContent = playerScore;
+    }
+
+    /**
+     * ゲーム開始時の処理
+     */
+    function startGame() {
+        isGameOver = false;
+        messageEl.textContent = 'カードを配ります...';
+
+        createAndShuffleDeck();
+        dealerHand = [];
+        playerHand = [];
+
+        // プレイヤーに2枚、ディーラーに2枚配る
+        playerHand.push(drawCard());
+        dealerHand.push(drawCard()); // ディーラーの1枚目 (裏向き)
+        playerHand.push(drawCard());
+        dealerHand.push(drawCard()); // ディーラーの2枚目 (表向き)
+
+        renderHands(true);
+
+        dealButton.disabled = true;
+        hitButton.disabled = false;
+        standButton.disabled = false;
+
+        checkBlackjack();
+    }
+    
+    /**
+     * ブラックジャックのチェック
+     */
+    function checkBlackjack() {
+        const playerScore = calculateScore(playerHand);
+        if (playerScore === 21) {
+            endGame(playerScore, calculateScore(dealerHand));
+        }
+    }
+
+    /**
+     * プレイヤーがヒットした時の処理
+     */
+    function playerHit() {
+        if (isGameOver) return;
+
+        playerHand.push(drawCard());
+        renderHands(true);
+
+        const playerScore = calculateScore(playerHand);
+
+        if (playerScore > 21) {
+            endGame(playerScore, calculateScore(dealerHand)); // バスト
+        } else if (playerScore === 21) {
+            playerStand(); // 21になったら強制スタンド
+        }
+    }
+
+    /**
+     * プレイヤーがスタンドした時の処理 (ディーラーのターン)
+     */
+    function playerStand() {
+        if (isGameOver) return;
+        
+        hitButton.disabled = true;
+        standButton.disabled = true;
+
+        // ディーラーの1枚目を公開
+        renderHands(false);
+        
+        let dealerScore = calculateScore(dealerHand);
+        const playerScore = calculateScore(playerHand);
+
+        // ディーラーは17以上になるまでヒットする
+        const dealerTurn = () => {
+            if (isGameOver) return;
+            
+            if (dealerScore < 17) {
+                setTimeout(() => {
+                    dealerHand.push(drawCard());
+                    dealerScore = calculateScore(dealerHand);
+                    renderHands(false);
+                    dealerTurn(); // 再度チェック
+                }, 1000); // 1秒待ってから次のカードを引く
+            } else {
+                endGame(playerScore, dealerScore);
+            }
+        };
+
+        dealerTurn();
+    }
+
+    /**
+     * ゲーム終了時の処理と勝敗判定
+     */
+    function endGame(playerScore, dealerScore) {
+        isGameOver = true;
+        renderHands(false); // 全てのカードを公開
+
+        let resultMessage = '';
+
+        if (playerScore > 21) {
+            resultMessage = `バスト！ (${playerScore})。あなたの負けです。`;
+        } else if (dealerScore > 21) {
+            resultMessage = `ディーラーバスト！ (${dealerScore})。あなたの勝ちです！`;
+        } else if (playerScore === dealerScore) {
+            resultMessage = `プッシュ (引き分け) です。`;
+        } else if (playerScore === 21) {
+            resultMessage = `ブラックジャック！ (${playerScore})。あなたの勝ちです！`;
+        } else if (playerScore > dealerScore) {
+            resultMessage = `あなたの勝ちです！ (${playerScore} 対 ${dealerScore})`;
+        } else {
+            resultMessage = `あなたの負けです。 (${playerScore} 対 ${dealerScore})`;
+        }
+
+        messageEl.textContent = resultMessage;
+        dealButton.disabled = false;
+        hitButton.disabled = true;
+        standButton.disabled = true;
+    }
+
+    // イベントリスナーの設定
+    dealButton.addEventListener('click', startGame);
+    hitButton.addEventListener('click', playerHit);
+    standButton.addEventListener('click', playerStand);
+
+    // 初期メッセージ
+    messageEl.textContent = 'ゲーム開始ボタンを押してください。';
+</script>
+</body>
+</html>
