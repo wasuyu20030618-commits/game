@@ -30,17 +30,17 @@
             padding: 20px;
         }
 
-        /* ★シャンデリアの動的エフェクト★ */
+        /* シャンデリアの動的エフェクト */
         .chandelier-light {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 150px; /* エフェクトが広がる高さを確保 */
+            height: 150px;
             pointer-events: none;
             overflow: hidden;
             background: radial-gradient(circle at 50% 10%, rgba(255, 255, 100, 0.4) 0%, rgba(255, 255, 150, 0) 60%);
-            animation: twinkle 4s infinite alternate; /* アニメーション適用 */
+            animation: twinkle 4s infinite alternate;
             z-index: 1; 
         }
 
@@ -96,7 +96,7 @@
             border: 1px solid #ccc;
         }
         
-        /* ★ベット額入力ボックス (input[type="number"]) のスタイル（大きく、目立つように調整済み）★ */
+        /* ベット額入力ボックス (input[type="number"]) のスタイル */
         input[type="number"] {
             padding: 10px 15px;
             border-radius: 5px; 
@@ -128,7 +128,22 @@
         #postGameButtons { margin-top: 20px; }
         #nextGameButton { background-color: #ccac00; color: #333; }
         #endGameButton { background-color: #8b0000; color: #fff; }
-        #message { font-size: 1.5em; margin-top: 20px; font-weight: bold; }
+        
+        /* ディーラーAAとセリフのエリア */
+        #message { 
+            font-size: 1.5em; 
+            margin-top: 20px; 
+            font-weight: bold; 
+            /* セリフの背景を少し変えて目立たせる */
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .dealer-aa { /* スクリプト内でAA自体に適用 */
+            font-size: 2.0em; 
+            margin-bottom: 5px;
+            display: block; /* AAとセリフを分けたい場合に備えて */
+        }
         
         /* モーダル (ルール)CSS - 高級感のある紙質 */
         .modal-overlay {
@@ -146,7 +161,6 @@
             position: relative;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
             border: 8px solid #ccac00; 
-            /* 紙の質感 */
             background-image: 
                 linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
@@ -170,12 +184,11 @@
             <li>目標は、手札の合計を **21に近づける**ことです。21を超えると**バスト（負け）**となります。</li>
             <li>**カードの数え方:** A=1点または11点, J/Q/K=10点, 2〜10=そのままの数字。</li>
             <li>**【チップとベット】** ゲーム開始時に**賭け金 (ベット)** を決めます。勝利するとチップが増加します。</li>
-            <li>**HIT (ヒット)**: カードをもう1枚引きます。</li>
-            <li>**STAND (スタンド)**: 現在の手札で勝負し、ディーラーのターンに移ります。</li>
+            <li>**【HIT/STAND】** HITでカードを追加、STANDで勝負します。</li>
             <li>**【連続勝利ボーナス】** 連続で勝利すると、ディーラーがより手強くなります。</li>
         </ul>
         
-        <p>※ このゲームは純粋な練習用であり、金銭は一切関わりません。</p>
+        <p>※ このゲームは練習用であり、金銭は一切関わりません。</p>
         <div class="modal-actions">
              <p style="color:#8b0000; font-weight: bold;">準備ができたら、右上の [✕] ボタンで閉じましょう。</p>
         </div>
@@ -187,7 +200,7 @@
     
     <div id="infoBar">
         <div class="info-item">
-            <span class="chip-icon">💰</span> チップ: <span id="chipsAmount">1000</span>
+            <span class="chip-icon">💰</span> チップ: <span id="chipsAmount">500</span>
         </div>
         <div class="info-item">
             <span class="win-streak-icon">🔥</span> 連続勝利: <span id="winStreak">0</span>
@@ -198,9 +211,9 @@
         <div>
             <label for="difficulty">難易度:</label>
             <select id="difficulty">
-                <option value="15">イージー (初期チップ: 2000)</option>
-                <option value="16" selected>ノーマル (初期チップ: 1000)</option>
-                <option value="17">ハード (初期チップ: 500)</option>
+                <option value="15">イージー (初期チップ: 1500)</option>
+                <option value="16" selected>ノーマル (初期チップ: 500)</option>
+                <option value="17">ハード (初期チップ: 200)</option>
             </select>
         </div>
         <div>
@@ -238,7 +251,7 @@
     //  ゲームの状態と定数
     // ----------------------------------------------------
     
-    // HTML要素の取得
+    // HTML要素の取得 (一部省略)
     const dealerCardsEl = document.getElementById('dealerCards');
     const playerCardsEl = document.getElementById('playerCards');
     const dealerScoreEl = document.getElementById('dealerScore');
@@ -253,8 +266,6 @@
     const winStreakEl = document.getElementById('winStreak');
     const preGameControls = document.getElementById('preGameControls');
     const postGameButtons = document.getElementById('postGameButtons');
-    const nextGameButton = document.getElementById('nextGameButton');
-    const endGameButton = document.getElementById('endGameButton');
     const ruleModal = document.getElementById('ruleModal');
     const closeModalButton = document.getElementById('closeModal');
 
@@ -263,7 +274,7 @@
     let dealerHand = [];
     let playerHand = [];
     let isGameOver = true;
-    let chips = 1000;
+    let chips = 500;
     let currentBet = 0;
     let winStreak = 0;
 
@@ -271,17 +282,63 @@
     const suits = ['♠', '♥', '♦', '♣'];
     const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     
-    // 難易度と初期チップのマッピング
+    // 難易度と初期チップのマッピング (最終調整版)
     const difficultySettings = {
-        '15': { chip: 2000, name: 'イージー' },
-        '16': { chip: 1000, name: 'ノーマル' },
-        '17': { chip: 500, name: 'ハード' }
+        '15': { chip: 1500, name: 'イージー' }, 
+        '16': { chip: 500, name: 'ノーマル' },  
+        '17': { chip: 200, name: 'ハード' }   
     };
     
     // ----------------------------------------------------
     //  ユーティリティ関数
     // ----------------------------------------------------
     
+    // ディーラーのアスキーアートとセリフを返す関数
+    function getDealerMessage(type, bet = 0) {
+        let aa = '';
+        let message = '';
+
+        switch (type) {
+            case 'start':
+                aa = '(*^.^*)';
+                message = '♠ **ベット・プリーズ。** ご準備は？';
+                break;
+            case 'win_blackjack':
+                aa = '(^O^)/';
+                message = `💰 **ブラックジャック！** お見事よ。チップ+${bet * 1.5}`;
+                break;
+            case 'win_normal':
+                aa = 'o(^-^)o';
+                message = `💰 **フル・ハウス！** あなたの勝ちよ。チップ+${bet}`;
+                break;
+            case 'push':
+                aa = '(-_-)';
+                message = `プッシュ（引き分け）。ベット額が戻ります。`;
+                break;
+            case 'lose':
+                aa = '(-_メ)';
+                message = `💔 **ルーズ・ユア・ベット。** 残念ね。チップを失いました (-${bet})`;
+                break;
+            case 'player_bust':
+                aa = '(-_-メ)';
+                message = `💥 **バスト！** ご愁傷様。チップを失いました (-${bet})`;
+                break;
+            case 'dealer_bust':
+                aa = '＼(>_<)／';
+                message = `💦 ディーラーバスト... やられたわね！チップ+${bet}`;
+                break;
+            case 'no_chips':
+                aa = '・_・';
+                message = 'チップがなくなりました... ゲームオーバー。';
+                break;
+            default:
+                aa = '^_^;';
+                message = '次の勝負へどうぞ。';
+        }
+        
+        return `<div class="dealer-aa">${aa}</div>${message}`;
+    }
+
     function updateChipsDisplay() {
         chipsAmountEl.textContent = chips;
         winStreakEl.textContent = winStreak;
@@ -311,7 +368,6 @@
     function calculateScore(hand) {
         let score = 0;
         let hasAce = 0;
-
         for (let card of hand) {
             if (['K', 'Q', 'J'].includes(card.value)) {
                 score += 10;
@@ -322,7 +378,6 @@
                 score += parseInt(card.value);
             }
         }
-
         while (score > 21 && hasAce > 0) {
             score -= 10;
             hasAce--;
@@ -367,9 +422,8 @@
             chips = difficultySettings[selectedDifficulty].chip;
             winStreak = 0;
             dealButton.textContent = "勝負開始";
-            messageEl.textContent = `チップが補充されました！ 初期チップ: ${chips}`;
+            messageEl.innerHTML = getDealerMessage('start') + `チップが補充されました！ 初期チップ: ${chips}`;
             updateChipsDisplay();
-            // ゲームオーバーをリセット
             endGame(null, null, false); 
             return;
         }
@@ -377,14 +431,14 @@
         currentBet = parseInt(betAmountInput.value);
         
         if (currentBet < 10 || currentBet > chips || isNaN(currentBet)) {
-            messageEl.textContent = `有効なベット額を入力してください (10〜${chips})。`;
+            messageEl.innerHTML = getDealerMessage('start') + `有効なベット額を入力してください (10〜${chips})。`;
             return;
         }
         
         chips -= currentBet;
         updateChipsDisplay();
 
-        messageEl.textContent = `ベット額 ${currentBet}。勝負開始！`;
+        messageEl.innerHTML = getDealerMessage('start') + `ベット額 ${currentBet}。勝負開始！`;
 
         isGameOver = false;
         createAndShuffleDeck();
@@ -451,7 +505,6 @@
         
         // ベースストップ値の決定 (難易度 + 連勝ボーナス)
         let baseStopValue = parseInt(difficultySelect.value);
-        // 3連勝ごとにストップ値を+1に調整
         let winStreakBonus = Math.floor(winStreak / 3); 
         let determinedStopValue = baseStopValue + winStreakBonus;
         if (determinedStopValue > 18) determinedStopValue = 18;
@@ -483,47 +536,49 @@
         isGameOver = true;
         if (!forcedGameOver) renderHands(false); 
 
-        let resultMessage = '';
+        let dealerMessageType = '';
         let win = false;
         const bet = currentBet;
 
         if (forcedGameOver) {
-            resultMessage = "チップがなくなりました... ゲームオーバー。";
+            dealerMessageType = 'no_chips';
         } else if (playerScore > 21) {
-            resultMessage = `バスト！ (${playerScore})。あなたの負けです。チップを失いました (-${bet})`;
+            dealerMessageType = 'player_bust';
         } else if (dealerScore > 21) {
             chips += bet * 2;
             win = true;
-            resultMessage = `ディーラーバスト！ (${dealerScore})。あなたの勝ちです！ チップ+${bet}`;
+            dealerMessageType = 'dealer_bust';
         } else if (playerScore === dealerScore) {
             chips += bet;
-            resultMessage = `プッシュ (引き分け) です。ベット額が戻ります。`;
+            dealerMessageType = 'push';
         } else if (playerScore === 21 && playerHand.length === 2) {
             chips += bet * 2.5;
             win = true;
-            resultMessage = `ブラックジャック！ (${playerScore})。チップ+${bet * 1.5}`;
+            dealerMessageType = 'win_blackjack';
         } else if (playerScore > dealerScore) {
             chips += bet * 2;
             win = true;
-            resultMessage = `あなたの勝ちです！ (${playerScore} 対 ${dealerScore})。チップ+${bet}`;
+            dealerMessageType = 'win_normal';
         } else {
-            resultMessage = `あなたの負けです。 (${playerScore} 対 ${dealerScore})。チップを失いました (-${bet})`;
+            dealerMessageType = 'lose';
         }
 
         if (win) {
             winStreak++;
-        } else if (!forcedGameOver && resultMessage.includes('プッシュ') === false) {
+        } else if (!forcedGameOver && dealerMessageType !== 'push') {
             winStreak = 0;
         }
 
-        messageEl.textContent = resultMessage;
+        // ディーラーのセリフとAAをメッセージエリアに表示
+        messageEl.innerHTML = getDealerMessage(dealerMessageType, bet);
+
         updateChipsDisplay();
         
         document.getElementById('buttons').style.display = 'none';
         preGameControls.style.display = 'flex';
         
         if (chips <= 0) {
-            messageEl.textContent = "チップがなくなりました... ゲームオーバー。難易度を選択して最初からやり直してください。";
+            // ゲームオーバー時の特別メッセージはgetDealerMessageで対応
             postGameButtons.style.display = 'none';
             dealButton.style.display = 'block';
             dealButton.textContent = "ゲーム再開";
@@ -533,7 +588,6 @@
             postGameButtons.style.display = 'block';
             dealButton.style.display = 'none';
             betAmountInput.disabled = false;
-            // 次のベット額を調整
             betAmountInput.value = parseInt(betAmountInput.value) > chips ? chips : (parseInt(betAmountInput.value) < 10 ? 10 : parseInt(betAmountInput.value));
         }
     }
@@ -549,7 +603,7 @@
         isGameOver = true;
         dealButton.textContent = "勝負開始";
         betAmountInput.disabled = false;
-        messageEl.textContent = 'ベット額と難易度を設定し、勝負開始！';
+        messageEl.innerHTML = getDealerMessage('start') + 'ベット額と難易度を設定し、勝負開始！';
         updateChipsDisplay();
     });
 
@@ -557,7 +611,7 @@
     hitButton.addEventListener('click', playerHit);
     standButton.addEventListener('click', playerStand);
     
-    nextGameButton.addEventListener('click', () => {
+    document.getElementById('nextGameButton').addEventListener('click', () => {
         document.getElementById('buttons').style.display = 'block';
         postGameButtons.style.display = 'none';
         dealButton.style.display = 'block';
@@ -565,11 +619,11 @@
         startGame();
     });
 
-    endGameButton.addEventListener('click', () => {
-        messageEl.textContent = `ゲーム終了。最終チップ: ${chips}。またのお越しをお待ちしております！`;
+    document.getElementById('endGameButton').addEventListener('click', () => {
+        messageEl.innerHTML = getDealerMessage('start') + `ゲーム終了。最終チップ: ${chips}。またのお越しをお待ちしております！`;
         dealButton.disabled = true;
-        nextGameButton.disabled = true;
-        endGameButton.disabled = true;
+        document.getElementById('nextGameButton').disabled = true;
+        document.getElementById('endGameButton').disabled = true;
         hitButton.disabled = true;
         standButton.disabled = true;
         preGameControls.style.display = 'none';
@@ -579,7 +633,7 @@
 
     function hideModal() {
         ruleModal.style.display = 'none';
-        messageEl.textContent = 'ベット額と難易度を設定し、勝負開始！';
+        messageEl.innerHTML = getDealerMessage('start') + `ベット額と難易度を設定し、勝負開始！`;
         const selectedDifficulty = difficultySelect.value;
         chips = difficultySettings[selectedDifficulty].chip;
         updateChipsDisplay();
@@ -591,7 +645,7 @@
     // ----------------------------------------------------
     updateChipsDisplay();
     ruleModal.style.display = 'flex';
-    messageEl.textContent = 'ルールを確認中です...';
+    messageEl.innerHTML = getDealerMessage('start') + 'ルールを確認中です...';
 
 </script>
 </body>
