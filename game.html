@@ -6,7 +6,7 @@
     <title>ブラックジャック - カジノモード</title>
     <style>
         /* ======================== */
-        /* ゲーム画面のCSS - カジノ風背景 (キラキラ強化) */
+        /* ゲーム画面のCSS - カジノ風背景 (キラキラ強化 + 要素追加) */
         /* ======================== */
         body {
             font-family: 'Arial', sans-serif;
@@ -14,10 +14,22 @@
             background-color: #0d230d; /* さらに深いダークグリーン */
             /* キラキラしたカジノの照明をイメージした豪華な背景 */
             background-image: 
+                /* シャンデリア (上部) */
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" width="100%" height="20%"><defs><filter id="f1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2" /></filter></defs><rect x="0" y="0" width="100" height="20" fill="transparent"/><path d="M50 0 L45 20 L55 20 Z" fill="#FFD700" filter="url(%23f1)"/><circle cx="50" cy="5" r="3" fill="#FFFACD" filter="url(%23f1)"/><path d="M40 10 C45 0, 55 0, 60 10 Q50 15, 40 10 Z" fill="#FFD700" filter="url(%23f1)"/></svg>') top center no-repeat,
+                /* 赤い椅子 (下部) */
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" width="100%" height="20%"><rect x="0" y="0" width="100" height="20" fill="transparent"/><path d="M10 20 H90 V10 Q50 0, 10 10 Z" fill="#8B0000"/><path d="M15 15 H85 V10 C80 5, 20 5, 15 10 Z" fill="#B22222"/></svg>') bottom center no-repeat,
                 radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0) 60%),
                 radial-gradient(ellipse at bottom left, #ccac00 0%, transparent 40%),
                 radial-gradient(ellipse at top right, #ff9800 0%, transparent 40%),
                 repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 5px);
+            background-size: 
+                auto 150px, /* シャンデリアの高さ */
+                auto 100px, /* 椅子の高さ */
+                cover, /* その他のグラデーション */
+                cover,
+                cover,
+                cover;
+            background-attachment: fixed; /* 背景を固定してスクロールしても動かないように */
             color: #fff;
             padding: 20px;
         }
@@ -27,54 +39,34 @@
             background-color: rgba(0, 0, 0, 0.75);
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.3); /* ゴールドの輝き */
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.3);
             border: 5px solid #ccac00;
         }
         
         /* インフォメーションエリア (チップ、連勝数) */
         #infoBar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #0b4920;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 1.1em;
-            font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 20px; background-color: #0b4920; border-radius: 8px;
+            margin-bottom: 20px; font-size: 1.1em; font-weight: bold;
         }
-        .info-item {
-            display: flex;
-            align-items: center;
-        }
+        .info-item { display: flex; align-items: center; }
         .chip-icon { color: gold; margin-right: 5px; font-size: 1.2em; }
         .win-streak-icon { color: #ff4500; margin-right: 5px; font-size: 1.2em; }
 
         /* ベット/難易度選択エリア */
         #preGameControls {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 25px;
+            margin-bottom: 20px; padding: 15px; background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px; display: flex; justify-content: center; align-items: center; gap: 25px;
         }
         select, input[type="number"] {
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 1em;
-            background-color: #fff;
-            color: #333;
-            border: 1px solid #ccc;
+            padding: 8px; border-radius: 5px; font-size: 1em;
+            background-color: #fff; color: #333; border: 1px solid #ccc;
         }
         
         /* ゲーム要素のスタイル（前回同様） */
         .hand { margin-bottom: 20px; border: 2px dashed #66bb6a; padding: 15px; border-radius: 8px; }
         .cards { display: flex; justify-content: center; margin: 10px 0; min-height: 100px; flex-wrap: wrap; }
         .card { 
-            /* カードの色調整 */
             background-color: #fff; color: #000; border: 1px solid #000; border-radius: 5px;
             width: 70px; height: 90px; display: flex; flex-direction: column; justify-content: space-between;
             align-items: center; margin: 0 5px; padding: 5px; font-size: 1.2em;
@@ -100,12 +92,45 @@
 
         #message { font-size: 1.5em; margin-top: 20px; font-weight: bold; }
         
-        /* モーダルのスタイル (前回同様) */
-        .modal-overlay { /* ... 省略 ... */ }
-        .modal-content { /* ... 省略 ... */ }
-        .close-button { /* ... 省略 ... */ }
-        .rule-title { /* ... 省略 ... */ }
-        .rule-list { /* ... 省略 ... */ }
+        /* ======================== */
+        /* モーダル (ルール)CSS - 高級感復活 */
+        /* ======================== */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex; justify-content: center; align-items: center; z-index: 100;
+        }
+
+        .modal-content {
+            background-color: #f5f5dc; /* カジノ風のアイボリー/ベージュの紙色 */
+            color: #333;
+            width: 90%; max-width: 500px;
+            padding: 40px 30px 20px 30px;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
+            border: 8px solid #ccac00; /* ゴールドの枠 */
+            /* 紙の質感を追加 */
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 20px 20px; /* 目立たない格子模様 */
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.3); /* 文字に少し深み */
+        }
+
+        .close-button {
+            position: absolute; top: 5px; right: 15px;
+            background: none; border: none; color: #333;
+            font-size: 2em; cursor: pointer; z-index: 101;
+        }
+        
+        .rule-title {
+            color: #8b0000; border-bottom: 2px solid #ccac00;
+            padding-bottom: 5px; margin-bottom: 15px;
+        }
+        
+        .rule-list { text-align: left; margin-bottom: 20px; }
+        .rule-list li { margin-bottom: 10px; line-height: 1.5; }
 
     </style>
 </head>
@@ -128,6 +153,7 @@
             </li>
             <li>**HIT (ヒット)**: カードをもう1枚引きます。</li>
             <li>**STAND (スタンド)**: 現在の手札で勝負し、ディーラーのターンに移ります。</li>
+            <li>**【連続勝利ボーナス】** 連続で勝利すると、ディーラーがより手強くなります。</li>
         </ul>
         
         <p>※ このゲームは純粋な練習用であり、金銭は一切関わりません。</p>
@@ -153,7 +179,7 @@
         <div>
             <label for="difficulty">難易度:</label>
             <select id="difficulty">
-                <option value="17">イージー</option>
+                <option value="14">イージー</option>
                 <option value="17" selected>ノーマル</option>
                 <option value="18">ハード</option>
             </select>
@@ -227,16 +253,17 @@
     const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     
     // 難易度と初期チップのマッピング
+    // valueはディーラーのストップ値に対応
     const difficultySettings = {
-        '17': { chip: 1000, name: 'ノーマル' }, // デフォルトで17ストップ
         '14': { chip: 2000, name: 'イージー' }, // ディーラーがすぐ止まる
+        '17': { chip: 1000, name: 'ノーマル' }, // デフォルトで17ストップ
         '18': { chip: 500, name: 'ハード' }  // ディーラーが粘る
     };
     // 難易度プルダウンの再設定 (初期チップ反映のため)
     difficultySelect.innerHTML = `
-        <option value="14">イージー (チップ: 2000)</option>
-        <option value="17" selected>ノーマル (チップ: 1000)</option>
-        <option value="18">ハード (チップ: 500)</option>
+        <option value="14">イージー (初期チップ: 2000)</option>
+        <option value="17" selected>ノーマル (初期チップ: 1000)</option>
+        <option value="18">ハード (初期チップ: 500)</option>
     `;
 
     /**
@@ -245,34 +272,134 @@
     function updateChipsDisplay() {
         chipsAmountEl.textContent = chips;
         winStreakEl.textContent = winStreak;
+        // ベット額の最大値を現在のチップに合わせる
         betAmountInput.max = chips;
+        // チップがベット額より少なくなったら、ベット額をチップ額に調整
+        if (parseInt(betAmountInput.value) > chips) {
+            betAmountInput.value = chips;
+        }
+        if (chips < 10 && !isGameOver) { // チップが10未満でゲーム中でない場合
+            // チップがなくなった場合のゲームオーバー処理を呼ぶ
+            endGame(null, null, true); // ゲームオーバーメッセージを強制表示
+        }
     }
 
-    // ... (createAndShuffleDeck, drawCard, calculateScore, getCardHtml, renderHands, checkBlackjack, playerHit は前回のものを利用) ...
-
-    /*
-     * 変更のあった主要関数のみ記載します
+    /**
+     * デッキを初期化し、シャッフルする
      */
+    function createAndShuffleDeck() {
+        deck = [];
+        for (let suit of suits) {
+            for (let value of values) {
+                deck.push({ suit, value });
+            }
+        }
+        // Fisher-Yatesシャッフルアルゴリズム
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+    }
+
+    /**
+     * デッキからカードを1枚引く
+     */
+    function drawCard() {
+        return deck.pop();
+    }
+
+    /**
+     * カードの点数を計算する
+     * @param {Array} hand - 手札の配列
+     * @returns {number} - 合計点
+     */
+    function calculateScore(hand) {
+        let score = 0;
+        let hasAce = 0;
+
+        for (let card of hand) {
+            if (['K', 'Q', 'J'].includes(card.value)) {
+                score += 10;
+            } else if (card.value === 'A') {
+                score += 11;
+                hasAce++;
+            } else {
+                score += parseInt(card.value);
+            }
+        }
+
+        // A (エース) の調整 (11点から1点に変更)
+        while (score > 21 && hasAce > 0) {
+            score -= 10;
+            hasAce--;
+        }
+        return score;
+    }
+
+    /**
+     * カードをHTMLで表示する
+     * @param {Object} card - カードオブジェクト
+     * @param {boolean} isHidden - 裏向きにするか
+     * @returns {string} - カードのHTML文字列
+     */
+    function getCardHtml(card, isHidden = false) {
+        if (isHidden) {
+            return `<div class="card hidden">DEALER<br>CARD</div>`;
+        }
+        const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+        return `
+            <div class="card" style="color: ${color};">
+                <div class="card-value">${card.value}</div>
+                <div class="card-suit" style="font-size: 1.5em;">${card.suit}</div>
+                <div class="card-value">${card.value}</div>
+            </div>
+        `;
+    }
+
+    /**
+     * 手札を画面に描画する
+     */
+    function renderHands(hideDealerFirst = true) {
+        dealerCardsEl.innerHTML = dealerHand.map((card, index) => 
+            getCardHtml(card, hideDealerFirst && index === 0)
+        ).join('');
+        playerCardsEl.innerHTML = playerHand.map(card => getCardHtml(card)).join('');
+
+        const dealerScore = calculateScore(dealerHand);
+        const playerScore = calculateScore(playerHand);
+        
+        // ディーラーの点数は、裏向きのカードがある場合は表示しない
+        dealerScoreEl.textContent = hideDealerFirst ? '?' : dealerScore;
+        playerScoreEl.textContent = playerScore;
+    }
 
     /**
      * ゲーム開始時の処理 (ベット処理を追加)
      */
     function startGame() {
-        if (isGameOver) {
-            currentBet = parseInt(betAmountInput.value);
-            
-            if (currentBet < 10 || currentBet > chips || isNaN(currentBet)) {
-                messageEl.textContent = `有効なベット額を入力してください (10〜${chips})。`;
-                return;
-            }
-
-            chips -= currentBet; // チップを引く
+        if (isGameOver && chips <= 0) { // チップが0でゲームオーバーからのリスタート
+            const selectedDifficulty = difficultySelect.value;
+            chips = difficultySettings[selectedDifficulty].chip;
+            winStreak = 0;
+            dealButton.textContent = "勝負開始";
+            messageEl.textContent = `チップが補充されました！ 初期チップ: ${chips}`;
             updateChipsDisplay();
-
-            messageEl.textContent = `ベット額 ${currentBet}。勝負開始！`;
-        } else {
-            messageEl.textContent = '次の勝負へ...';
+            // ゲームオーバーメッセージを消すため一度クリア
+            endGame(null, null, false);
+            return; // 最初のstartGame呼び出しはチップ補充で終了
         }
+
+        currentBet = parseInt(betAmountInput.value);
+        
+        if (currentBet < 10 || currentBet > chips || isNaN(currentBet)) {
+            messageEl.textContent = `有効なベット額を入力してください (10〜${chips})。`;
+            return;
+        }
+        
+        chips -= currentBet; // チップを引く
+        updateChipsDisplay();
+
+        messageEl.textContent = `ベット額 ${currentBet}。勝負開始！`;
 
         isGameOver = false;
         createAndShuffleDeck();
@@ -289,14 +416,51 @@
 
 
         playerHand.push(drawCard());
-        dealerHand.push(drawCard());
+        dealerHand.push(drawCard()); // ディーラーの1枚目 (裏向き)
         playerHand.push(drawCard());
-        dealerHand.push(drawCard());
+        dealerHand.push(drawCard()); // ディーラーの2枚目 (表向き)
 
         renderHands(true);
         checkBlackjack();
     }
     
+    /**
+     * ブラックジャックのチェック
+     */
+    function checkBlackjack() {
+        const playerScore = calculateScore(playerHand);
+        if (playerScore === 21 && playerHand.length === 2) { // 2枚での21はブラックジャック
+             // プレイヤーがBJの場合、ディーラーの隠しカードを開けてチェック
+             renderHands(false);
+             const dealerScore = calculateScore(dealerHand);
+             if (dealerScore === 21 && dealerHand.length === 2) {
+                 endGame(playerScore, dealerScore); // 両者BJでプッシュ
+             } else {
+                 endGame(playerScore, dealerScore); // プレイヤーBJ勝ち
+             }
+        } else if (playerScore === 21) {
+            playerStand(); // 21になったら強制スタンド (BJではない)
+        }
+    }
+
+    /**
+     * プレイヤーがヒットした時の処理
+     */
+    function playerHit() {
+        if (isGameOver) return;
+
+        playerHand.push(drawCard());
+        renderHands(true);
+
+        const playerScore = calculateScore(playerHand);
+
+        if (playerScore > 21) {
+            endGame(playerScore, calculateScore(dealerHand)); // バスト
+        } else if (playerScore === 21) {
+            playerStand(); // 21になったら強制スタンド
+        }
+    }
+
     /**
      * プレイヤーがスタンドした時の処理 (ディーラーのターン)
      * 連続勝利数に応じてディーラーのストップ値を調整
@@ -307,7 +471,7 @@
         hitButton.disabled = true;
         standButton.disabled = true;
 
-        renderHands(false);
+        renderHands(false); // ディーラーの1枚目を公開
         
         let dealerScore = calculateScore(dealerHand);
         const playerScore = calculateScore(playerHand);
@@ -318,19 +482,20 @@
         // 連続勝利数に応じてストップ値を厳しくする
         // 5連勝ごとにストップ値が+1される (最大18まで)
         let stopValue = baseStopValue + Math.floor(winStreak / 5);
-        if (stopValue > 18) stopValue = 18;
+        if (stopValue > 18) stopValue = 18; // 18を超えることはない
 
 
         const dealerTurn = () => {
             if (isGameOver) return;
             
+            // ディーラーは設定されたストップ値以上になるまでヒットする
             if (dealerScore < stopValue) {
                 setTimeout(() => {
                     dealerHand.push(drawCard());
                     dealerScore = calculateScore(dealerHand);
                     renderHands(false);
-                    dealerTurn();
-                }, 1000); 
+                    dealerTurn(); // 再度チェック
+                }, 1000); // 1秒待ってから次のカードを引く
             } else {
                 endGame(playerScore, dealerScore);
             }
@@ -341,44 +506,45 @@
 
     /**
      * ゲーム終了時の処理と勝敗判定 (チップ計算を追加)
+     * @param {number} playerScore - プレイヤーの最終点数
+     * @param {number} dealerScore - ディーラーの最終点数
+     * @param {boolean} forcedGameOver - チップ切れなどで強制ゲームオーバーの場合
      */
-    function endGame(playerScore, dealerScore) {
+    function endGame(playerScore, dealerScore, forcedGameOver = false) {
         isGameOver = true;
-        renderHands(false);
+        renderHands(false); // 全てのカードを公開
 
         let resultMessage = '';
-        let chipChange = 0;
         let win = false;
         const bet = currentBet;
 
-        if (playerScore > 21) {
-            resultMessage = `バスト！ あなたの負けです。チップを失いました (-${bet})`;
+        if (forcedGameOver) {
+            resultMessage = "チップがなくなりました... ゲームオーバー。";
+        } else if (playerScore > 21) {
+            resultMessage = `バスト！ (${playerScore})。あなたの負けです。チップを失いました (-${bet})`;
         } else if (dealerScore > 21) {
-            chipChange = bet; // 賭け金の2倍 (元金+勝利金)
-            chips += bet * 2;
+            chips += bet * 2; // 元金 + 勝利金
             win = true;
-            resultMessage = `ディーラーバスト！ あなたの勝ちです！ チップ+${bet}`;
+            resultMessage = `ディーラーバスト！ (${dealerScore})。あなたの勝ちです！ チップ+${bet}`;
         } else if (playerScore === dealerScore) {
             chips += bet; // 賭け金が戻る (プッシュ)
             resultMessage = `プッシュ (引き分け) です。ベット額が戻ります。`;
-        } else if (playerScore === 21 && playerHand.length === 2) {
-            chipChange = bet * 1.5; // ブラックジャックは2.5倍
-            chips += bet * 2.5;
+        } else if (playerScore === 21 && playerHand.length === 2) { // 2枚での21はブラックジャック
+            chips += bet * 2.5; // 元金 + 勝利金(1.5倍)
             win = true;
-            resultMessage = `ブラックジャック！ チップ+${chipChange} (2.5倍)`;
+            resultMessage = `ブラックジャック！ (${playerScore})。チップ+${bet * 1.5}`;
         } else if (playerScore > dealerScore) {
-            chipChange = bet;
-            chips += bet * 2;
+            chips += bet * 2; // 元金 + 勝利金
             win = true;
-            resultMessage = `あなたの勝ちです！ チップ+${bet}`;
+            resultMessage = `あなたの勝ちです！ (${playerScore} 対 ${dealerScore})。チップ+${bet}`;
         } else {
-            resultMessage = `あなたの負けです。 チップを失いました (-${bet})`;
+            resultMessage = `あなたの負けです。 (${playerScore} 対 ${dealerScore})。チップを失いました (-${bet})`;
         }
 
         // 連続勝利の更新
         if (win) {
             winStreak++;
-        } else if (resultMessage.includes('プッシュ') === false) {
+        } else if (!forcedGameOver && resultMessage.includes('プッシュ') === false) { // 負けた場合のみリセット
             winStreak = 0;
         }
 
@@ -387,15 +553,23 @@
         
         // UIの切り替え
         document.getElementById('buttons').style.display = 'none';
-        postGameButtons.style.display = 'block';
         preGameControls.style.display = 'flex';
-        betAmountInput.value = chips > bet ? bet : chips; // 次のベット額を調整
-
+        
         if (chips <= 0) {
-            messageEl.textContent = "チップがなくなりました... ゲームオーバー。";
-            postGameButtons.style.display = 'none';
-            dealButton.textContent = "最初からやり直す";
-            dealButton.style.display = 'block';
+            // チップが0になった場合の特別な処理
+            messageEl.textContent = "チップがなくなりました... ゲームオーバー。難易度を選択して最初からやり直してください。";
+            postGameButtons.style.display = 'none'; // 次の勝負、終了ボタンは表示しない
+            dealButton.style.display = 'block'; // 「勝負開始」ボタンを表示（再スタート用）
+            dealButton.textContent = "ゲーム再開";
+            dealButton.disabled = false; // 再開できるようにする
+            // ベット額入力も無効化 (チップ0なので賭けられない)
+            betAmountInput.disabled = true;
+        } else {
+            postGameButtons.style.display = 'block';
+            dealButton.style.display = 'none'; // 通常の「勝負開始」は隠す
+            betAmountInput.disabled = false;
+            // 次のベット額を調整 (現在のチップより多くならないように)
+            betAmountInput.value = parseInt(betAmountInput.value) > chips ? chips : (parseInt(betAmountInput.value) < 10 ? 10 : parseInt(betAmountInput.value));
         }
     }
 
@@ -405,145 +579,62 @@
     
     // 難易度変更時、初期チップを更新
     difficultySelect.addEventListener('change', () => {
-        const value = difficultySelect.value;
-        if (value === '14') chips = 2000; // イージー
-        else if (value === '18') chips = 500; // ハード
-        else chips = 1000; // ノーマル
-        
+        const selectedDifficulty = difficultySelect.value;
+        chips = difficultySettings[selectedDifficulty].chip;
         winStreak = 0; // 難易度変更で連勝リセット
+        isGameOver = true; // 難易度変更で強制的にゲームオーバー状態に
+        dealButton.textContent = "勝負開始"; // ボタンをリセット
+        betAmountInput.disabled = false; // ベット入力も有効化
+        messageEl.textContent = 'ベット額と難易度を設定し、勝負開始！';
         updateChipsDisplay();
     });
 
     // ゲームコントロールイベント
-    dealButton.addEventListener('click', () => {
-        if (chips <= 0 && isGameOver) {
-            // ゲームオーバーからのリスタート
-            const value = difficultySelect.value;
-            if (value === '14') chips = 2000;
-            else if (value === '18') chips = 500;
-            else chips = 1000;
-            winStreak = 0;
-            dealButton.textContent = "勝負開始";
-        }
-        startGame();
-    });
-    
+    dealButton.addEventListener('click', startGame);
     hitButton.addEventListener('click', playerHit);
     standButton.addEventListener('click', playerStand);
     
     // 終了後ボタンのイベント
-    nextGameButton.addEventListener('click', startGame);
+    nextGameButton.addEventListener('click', () => {
+        // 次のゲーム開始前に、ゲーム開始前のUIに戻す
+        document.getElementById('buttons').style.display = 'block';
+        postGameButtons.style.display = 'none';
+        dealButton.style.display = 'block'; // 「勝負開始」ボタンを表示
+        dealButton.disabled = false; // ボタンを有効化
+        
+        startGame(); // 次のゲームを開始
+    });
+
     endGameButton.addEventListener('click', () => {
         messageEl.textContent = `ゲーム終了。最終チップ: ${chips}。またのお越しをお待ちしております！`;
-        // 全ボタンを無効化
+        // 全ボタンを無効化し、UIをゲーム終了状態にする
         dealButton.disabled = true;
         nextGameButton.disabled = true;
         endGameButton.disabled = true;
+        hitButton.disabled = true;
+        standButton.disabled = true;
+        preGameControls.style.display = 'none'; // ベット/難易度選択も隠す
+        document.getElementById('buttons').style.display = 'none'; // ヒット/スタンドボタンも隠す
+        
+        isGameOver = true; // 完全にゲーム終了状態
     });
 
     // モーダルイベント
     function hideModal() {
         ruleModal.style.display = 'none';
         messageEl.textContent = 'ベット額と難易度を設定し、勝負開始！';
+        // モーダルを閉じた後の初期化処理
+        const selectedDifficulty = difficultySelect.value;
+        chips = difficultySettings[selectedDifficulty].chip; // 初期チップを設定
+        updateChipsDisplay();
     }
     closeModalButton.addEventListener('click', hideModal);
 
     // 初期化
     updateChipsDisplay();
-    ruleModal.style.display = 'flex';
+    ruleModal.style.display = 'flex'; // ページロード時にルールモーダルを表示
     messageEl.textContent = 'ルールを確認中です...';
 
-    // ----------------------------------------------------
-    // ⚠️ 前回のコードから引き継ぐ必要のある関数 (コードの簡略化のため再掲)
-    // ----------------------------------------------------
-    
-    // (createAndShuffleDeck, drawCard, calculateScore, getCardHtml, checkBlackjack, playerHit, renderHands の定義をここに含めてください)
-    
-    function createAndShuffleDeck() {
-        deck = [];
-        for (let suit of suits) {
-            for (let value of values) {
-                deck.push({ suit, value });
-            }
-        }
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
-    }
-
-    function drawCard() {
-        return deck.pop();
-    }
-
-    function calculateScore(hand) {
-        let score = 0;
-        let hasAce = 0;
-        for (let card of hand) {
-            if (['K', 'Q', 'J'].includes(card.value)) {
-                score += 10;
-            } else if (card.value === 'A') {
-                score += 11;
-                hasAce++;
-            } else {
-                score += parseInt(card.value);
-            }
-        }
-        while (score > 21 && hasAce > 0) {
-            score -= 10;
-            hasAce--;
-        }
-        return score;
-    }
-
-    function getCardHtml(card, isHidden = false) {
-        if (isHidden) {
-            return `<div class="card hidden">DEALER<br>CARD</div>`;
-        }
-        const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
-        return `
-            <div class="card" style="color: ${color};">
-                <div class="card-value">${card.value}</div>
-                <div class="card-suit" style="font-size: 1.5em;">${card.suit}</div>
-                <div class="card-value">${card.value}</div>
-            </div>
-        `;
-    }
-
-    function renderHands(hideDealerFirst = true) {
-        dealerCardsEl.innerHTML = dealerHand.map((card, index) => 
-            getCardHtml(card, hideDealerFirst && index === 0)
-        ).join('');
-        playerCardsEl.innerHTML = playerHand.map(card => getCardHtml(card)).join('');
-
-        const dealerScore = calculateScore(dealerHand);
-        const playerScore = calculateScore(playerHand);
-        
-        dealerScoreEl.textContent = hideDealerFirst ? '?' : dealerScore;
-        playerScoreEl.textContent = playerScore;
-    }
-
-    function checkBlackjack() {
-        const playerScore = calculateScore(playerHand);
-        if (playerScore === 21) {
-            endGame(playerScore, calculateScore(dealerHand));
-        }
-    }
-
-    function playerHit() {
-        if (isGameOver) return;
-
-        playerHand.push(drawCard());
-        renderHands(true);
-
-        const playerScore = calculateScore(playerHand);
-
-        if (playerScore > 21) {
-            endGame(playerScore, calculateScore(dealerHand)); 
-        } else if (playerScore === 21) {
-            playerStand(); 
-        }
-    }
 </script>
 </body>
 </html>
