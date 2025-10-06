@@ -3,26 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>シンプルなブラックジャック</title>
+    <title>難易度選択ブラックジャック</title>
     <style>
         /* ======================== */
-        /* ゲーム画面のCSS      */
+        /* ゲーム画面のCSS - カジノ風背景 */
         /* ======================== */
         body {
             font-family: 'Arial', sans-serif;
             text-align: center;
-            background-color: #2c5836; /* ダークグリーン */
+            /* カジノテーブル風の背景 */
+            background-color: #0b4920; 
+            background-image: 
+                radial-gradient(circle at center, rgba(100, 200, 100, 0.2) 0%, rgba(0, 0, 0, 0) 70%), 
+                repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0px, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 5px);
             color: #fff;
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 850px;
             margin: 0 auto;
-            background-color: #1a4220;
+            background-color: rgba(0, 0, 0, 0.6); /* 透明度のある黒でテーブル感 */
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+            border: 4px solid #ccac00; /* ゴールドの枠 */
         }
+        
+        /* 難易度選択エリア */
+        #difficultySelectContainer {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px dashed #66bb6a;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        #difficulty {
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 1em;
+            background-color: #fff;
+            color: #333;
+        }
+        
+        /* カード、ボタン、モーダルのスタイルは前回を踏襲（微調整あり） */
         .hand {
             margin-bottom: 20px;
             border: 2px dashed #66bb6a;
@@ -84,24 +110,22 @@
             font-weight: bold;
         }
         
-        /* ======================== */
-        /* モーダル (ルール)CSS   */
-        /* ======================== */
+        /* モーダル (ルール)CSS */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7); /* 半透明の黒 */
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 100; /* 最前面に表示 */
+            z-index: 100;
         }
 
         .modal-content {
-            background-color: #f5f5dc; /* カジノ風のアイボリー/ベージュ */
+            background-color: #f5f5dc; 
             color: #333;
             width: 90%;
             max-width: 500px;
@@ -109,7 +133,7 @@
             border-radius: 10px;
             position: relative;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
-            border: 8px solid #ccac00; /* ゴージャスなゴールドの枠 */
+            border: 8px solid #ccac00;
         }
 
         .close-button {
@@ -121,10 +145,11 @@
             color: #333;
             font-size: 2em;
             cursor: pointer;
+            z-index: 101; /* 枠線の上に来るように */
         }
         
         .rule-title {
-            color: #8b0000; /* ダークレッド */
+            color: #8b0000;
             border-bottom: 2px solid #ccac00;
             padding-bottom: 5px;
             margin-bottom: 15px;
@@ -138,19 +163,6 @@
             margin-bottom: 10px;
             line-height: 1.5;
         }
-
-        .modal-actions {
-            margin-top: 20px;
-        }
-        .modal-actions button {
-            background-color: #8b0000; /* 赤色 */
-            color: #fff;
-            padding: 10px 20px;
-        }
-        .modal-actions button:hover {
-             background-color: #6a0000;
-        }
-
     </style>
 </head>
 <body>
@@ -177,15 +189,23 @@
         <p>※ このゲームは純粋な練習用であり、金銭は一切関わりません。</p>
 
         <div class="modal-actions">
-            <button id="startPractice">♦ 練習開始 ♦</button>
+             <p style="color:#8b0000; font-weight: bold;">準備ができたら、右上の [✕] ボタンで閉じましょう。</p>
         </div>
     </div>
 </div>
 
 <div class="container">
     <h1>ブラックジャック</h1>
-    <p>ルールを確認したら、練習開始！</p>
     
+    <div id="difficultySelectContainer">
+        <label for="difficulty">難易度選択:</label>
+        <select id="difficulty">
+            <option value="easy">イージー (ディーラーは14以上でストップ)</option>
+            <option value="normal" selected>ノーマル (ディーラーは17以上でストップ)</option>
+            <option value="hard">ハード (ディーラーは18以上でストップ)</option>
+        </select>
+    </div>
+
     <div id="dealerHand" class="hand">
         <h2>ディーラーの手札: <span id="dealerScore">0</span></h2>
         <div id="dealerCards" class="cards"></div>
@@ -207,7 +227,7 @@
 
 <script>
     // ----------------------------------------------------
-    //  ゲームのロジック (変更なし)
+    //  ゲームのロジック
     // ----------------------------------------------------
     
     // HTML要素の取得
@@ -219,11 +239,10 @@
     const dealButton = document.getElementById('dealButton');
     const hitButton = document.getElementById('hitButton');
     const standButton = document.getElementById('standButton');
-    
-    // ★モーダル要素の取得★
     const ruleModal = document.getElementById('ruleModal');
     const closeModalButton = document.getElementById('closeModal');
-    const startPracticeButton = document.getElementById('startPractice');
+    // ★難易度選択要素の取得★
+    const difficultySelect = document.getElementById('difficulty');
 
     // カードとゲームの状態
     let deck = [];
@@ -235,37 +254,33 @@
     const suits = ['♠', '♥', '♦', '♣'];
     const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-    /**
-     * デッキを初期化し、シャッフルする
+    // ... (createAndShuffleDeck, drawCard, calculateScore, getCardHtml, renderHands, startGame, checkBlackjack, playerHit の各関数は変更なし) ...
+    // ※コードの重複を避けるため省略しますが、前回のコードからそのまま引き継いでください。
+
+    /*
+     * calculateScore関数とgetCardHtml関数は長いため省略しています。
+     * 前回コードの該当関数をそのまま貼り付けてください。
      */
-    function createAndShuffleDeck() {
+     function createAndShuffleDeck() {
         deck = [];
         for (let suit of suits) {
             for (let value of values) {
                 deck.push({ suit, value });
             }
         }
-        // Fisher-Yatesシャッフルアルゴリズム
         for (let i = deck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [deck[i], deck[j]] = [deck[j], deck[i]];
         }
     }
 
-    /**
-     * デッキからカードを1枚引く
-     */
     function drawCard() {
         return deck.pop();
     }
 
-    /**
-     * カードの点数を計算する
-     */
     function calculateScore(hand) {
         let score = 0;
         let hasAce = 0;
-
         for (let card of hand) {
             if (['K', 'Q', 'J'].includes(card.value)) {
                 score += 10;
@@ -276,8 +291,6 @@
                 score += parseInt(card.value);
             }
         }
-
-        // A (エース) の調整 (11点から1点に変更)
         while (score > 21 && hasAce > 0) {
             score -= 10;
             hasAce--;
@@ -285,9 +298,6 @@
         return score;
     }
 
-    /**
-     * カードをHTMLで表示する
-     */
     function getCardHtml(card, isHidden = false) {
         if (isHidden) {
             return `<div class="card hidden">DEALER<br>CARD</div>`;
@@ -302,9 +312,6 @@
         `;
     }
 
-    /**
-     * 手札を画面に描画する
-     */
     function renderHands(hideDealerFirst = true) {
         dealerCardsEl.innerHTML = dealerHand.map((card, index) => 
             getCardHtml(card, hideDealerFirst && index === 0)
@@ -318,9 +325,6 @@
         playerScoreEl.textContent = playerScore;
     }
 
-    /**
-     * ゲーム開始時の処理
-     */
     function startGame() {
         isGameOver = false;
         messageEl.textContent = 'カードを配ります...';
@@ -343,9 +347,6 @@
         checkBlackjack();
     }
     
-    /**
-     * ブラックジャックのチェック
-     */
     function checkBlackjack() {
         const playerScore = calculateScore(playerHand);
         if (playerScore === 21) {
@@ -353,9 +354,6 @@
         }
     }
 
-    /**
-     * プレイヤーがヒットした時の処理
-     */
     function playerHit() {
         if (isGameOver) return;
 
@@ -371,8 +369,10 @@
         }
     }
 
+
     /**
      * プレイヤーがスタンドした時の処理 (ディーラーのターン)
+     * ★難易度に応じてディーラーのストップ値を変更★
      */
     function playerStand() {
         if (isGameOver) return;
@@ -384,11 +384,23 @@
         
         let dealerScore = calculateScore(dealerHand);
         const playerScore = calculateScore(playerHand);
+        
+        // ★難易度設定に応じてディーラーのストップ値を決定★
+        const difficulty = difficultySelect.value;
+        let stopValue = 17; // ノーマルのデフォルト値
+
+        if (difficulty === 'easy') {
+            stopValue = 14; 
+        } else if (difficulty === 'hard') {
+            stopValue = 18; 
+        }
+
 
         const dealerTurn = () => {
             if (isGameOver) return;
             
-            if (dealerScore < 17) {
+            // ディーラーは設定されたストップ値以上になるまでヒットする
+            if (dealerScore < stopValue) {
                 setTimeout(() => {
                     dealerHand.push(drawCard());
                     dealerScore = calculateScore(dealerHand);
@@ -436,12 +448,8 @@
     //  モーダル制御のロジック
     // ----------------------------------------------------
     
-    /**
-     * モーダルを閉じる関数
-     */
     function hideModal() {
         ruleModal.style.display = 'none';
-        // モーダルを閉じた後、すぐに「ゲーム開始」ボタンを押せる状態にする
         messageEl.textContent = 'ゲーム開始ボタンを押してください。';
     }
 
@@ -450,12 +458,10 @@
     hitButton.addEventListener('click', playerHit);
     standButton.addEventListener('click', playerStand);
     
-    // ★モーダルボタンのイベント設定★
+    // モーダルボタンのイベント設定
     closeModalButton.addEventListener('click', hideModal);
-    startPracticeButton.addEventListener('click', hideModal); // どちらを押してもモーダルを閉じてゲーム開始
 
     // 初期メッセージとモーダルの表示
-    // ページロード時、ルールモーダルを最初に表示します
     ruleModal.style.display = 'flex';
     messageEl.textContent = 'ルールを確認中です...';
 
