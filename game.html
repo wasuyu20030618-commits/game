@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>シンプルなブラックジャック</title>
     <style>
+        /* ======================== */
+        /* ゲーム画面のCSS      */
+        /* ======================== */
         body {
             font-family: 'Arial', sans-serif;
             text-align: center;
@@ -59,9 +62,6 @@
             align-items: center;
             font-style: italic;
         }
-        .card-suit {
-            font-size: 0.8em;
-        }
         button {
             padding: 10px 20px;
             font-size: 1em;
@@ -83,13 +83,108 @@
             margin-top: 20px;
             font-weight: bold;
         }
+        
+        /* ======================== */
+        /* モーダル (ルール)CSS   */
+        /* ======================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* 半透明の黒 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* 最前面に表示 */
+        }
+
+        .modal-content {
+            background-color: #f5f5dc; /* カジノ風のアイボリー/ベージュ */
+            color: #333;
+            width: 90%;
+            max-width: 500px;
+            padding: 40px 30px 20px 30px;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
+            border: 8px solid #ccac00; /* ゴージャスなゴールドの枠 */
+        }
+
+        .close-button {
+            position: absolute;
+            top: 5px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #333;
+            font-size: 2em;
+            cursor: pointer;
+        }
+        
+        .rule-title {
+            color: #8b0000; /* ダークレッド */
+            border-bottom: 2px solid #ccac00;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .rule-list {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .rule-list li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            background-color: #8b0000; /* 赤色 */
+            color: #fff;
+            padding: 10px 20px;
+        }
+        .modal-actions button:hover {
+             background-color: #6a0000;
+        }
+
     </style>
 </head>
 <body>
 
+<div id="ruleModal" class="modal-overlay">
+    <div class="modal-content">
+        <button id="closeModal" class="close-button">&times;</button>
+        <h2 class="rule-title">♦ ブラックジャックのルール ♦</h2>
+        
+        <ul class="rule-list">
+            <li>目標は、手札の合計を **21に近づける**ことです。21を超えると**バスト（負け）**となります。</li>
+            <li>**カードの数え方:**
+                <ul>
+                    <li>**2〜10**: そのままの数字。</li>
+                    <li>**J/Q/K**: **10点**として数えます。</li>
+                    <li>**A（エース）**: **1点**または**11点**として有利な方で数えます。</li>
+                </ul>
+            </li>
+            <li>**HIT (ヒット)**: カードをもう1枚引きます。</li>
+            <li>**STAND (スタンド)**: 現在の手札で勝負し、ディーラーのターンに移ります。</li>
+            <li>**ディーラー**: ディーラーは、手札の合計が**17以上**になるまでカードを引き続けます。</li>
+        </ul>
+        
+        <p>※ このゲームは純粋な練習用であり、金銭は一切関わりません。</p>
+
+        <div class="modal-actions">
+            <button id="startPractice">♦ 練習開始 ♦</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <h1>ブラックジャック</h1>
-    <p>カードの合計が21を超えないようにディーラーより21に近づけましょう！</p>
+    <p>ルールを確認したら、練習開始！</p>
     
     <div id="dealerHand" class="hand">
         <h2>ディーラーの手札: <span id="dealerScore">0</span></h2>
@@ -112,7 +207,7 @@
 
 <script>
     // ----------------------------------------------------
-    //  ゲームのロジック
+    //  ゲームのロジック (変更なし)
     // ----------------------------------------------------
     
     // HTML要素の取得
@@ -124,6 +219,11 @@
     const dealButton = document.getElementById('dealButton');
     const hitButton = document.getElementById('hitButton');
     const standButton = document.getElementById('standButton');
+    
+    // ★モーダル要素の取得★
+    const ruleModal = document.getElementById('ruleModal');
+    const closeModalButton = document.getElementById('closeModal');
+    const startPracticeButton = document.getElementById('startPractice');
 
     // カードとゲームの状態
     let deck = [];
@@ -161,8 +261,6 @@
 
     /**
      * カードの点数を計算する
-     * @param {Array} hand - 手札の配列
-     * @returns {number} - 合計点
      */
     function calculateScore(hand) {
         let score = 0;
@@ -189,9 +287,6 @@
 
     /**
      * カードをHTMLで表示する
-     * @param {Object} card - カードオブジェクト
-     * @param {boolean} isHidden - 裏向きにするか
-     * @returns {string} - カードのHTML文字列
      */
     function getCardHtml(card, isHidden = false) {
         if (isHidden) {
@@ -219,7 +314,6 @@
         const dealerScore = calculateScore(dealerHand);
         const playerScore = calculateScore(playerHand);
         
-        // ディーラーの点数は、裏向きのカードがある場合は表示しない
         dealerScoreEl.textContent = hideDealerFirst ? '?' : dealerScore;
         playerScoreEl.textContent = playerScore;
     }
@@ -235,11 +329,10 @@
         dealerHand = [];
         playerHand = [];
 
-        // プレイヤーに2枚、ディーラーに2枚配る
         playerHand.push(drawCard());
-        dealerHand.push(drawCard()); // ディーラーの1枚目 (裏向き)
+        dealerHand.push(drawCard());
         playerHand.push(drawCard());
-        dealerHand.push(drawCard()); // ディーラーの2枚目 (表向き)
+        dealerHand.push(drawCard());
 
         renderHands(true);
 
@@ -272,9 +365,9 @@
         const playerScore = calculateScore(playerHand);
 
         if (playerScore > 21) {
-            endGame(playerScore, calculateScore(dealerHand)); // バスト
+            endGame(playerScore, calculateScore(dealerHand)); 
         } else if (playerScore === 21) {
-            playerStand(); // 21になったら強制スタンド
+            playerStand(); 
         }
     }
 
@@ -287,13 +380,11 @@
         hitButton.disabled = true;
         standButton.disabled = true;
 
-        // ディーラーの1枚目を公開
         renderHands(false);
         
         let dealerScore = calculateScore(dealerHand);
         const playerScore = calculateScore(playerHand);
 
-        // ディーラーは17以上になるまでヒットする
         const dealerTurn = () => {
             if (isGameOver) return;
             
@@ -302,8 +393,8 @@
                     dealerHand.push(drawCard());
                     dealerScore = calculateScore(dealerHand);
                     renderHands(false);
-                    dealerTurn(); // 再度チェック
-                }, 1000); // 1秒待ってから次のカードを引く
+                    dealerTurn();
+                }, 1000); 
             } else {
                 endGame(playerScore, dealerScore);
             }
@@ -317,7 +408,7 @@
      */
     function endGame(playerScore, dealerScore) {
         isGameOver = true;
-        renderHands(false); // 全てのカードを公開
+        renderHands(false);
 
         let resultMessage = '';
 
@@ -340,14 +431,34 @@
         hitButton.disabled = true;
         standButton.disabled = true;
     }
+    
+    // ----------------------------------------------------
+    //  モーダル制御のロジック
+    // ----------------------------------------------------
+    
+    /**
+     * モーダルを閉じる関数
+     */
+    function hideModal() {
+        ruleModal.style.display = 'none';
+        // モーダルを閉じた後、すぐに「ゲーム開始」ボタンを押せる状態にする
+        messageEl.textContent = 'ゲーム開始ボタンを押してください。';
+    }
 
     // イベントリスナーの設定
     dealButton.addEventListener('click', startGame);
     hitButton.addEventListener('click', playerHit);
     standButton.addEventListener('click', playerStand);
+    
+    // ★モーダルボタンのイベント設定★
+    closeModalButton.addEventListener('click', hideModal);
+    startPracticeButton.addEventListener('click', hideModal); // どちらを押してもモーダルを閉じてゲーム開始
 
-    // 初期メッセージ
-    messageEl.textContent = 'ゲーム開始ボタンを押してください。';
+    // 初期メッセージとモーダルの表示
+    // ページロード時、ルールモーダルを最初に表示します
+    ruleModal.style.display = 'flex';
+    messageEl.textContent = 'ルールを確認中です...';
+
 </script>
 </body>
 </html>
