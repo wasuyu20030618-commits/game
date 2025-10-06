@@ -139,10 +139,10 @@
             padding: 10px;
             border-radius: 8px;
         }
-        .dealer-aa { /* スクリプト内でAA自体に適用 */
+        .dealer-aa { 
             font-size: 2.0em; 
             margin-bottom: 5px;
-            display: block; /* AAとセリフを分けたい場合に備えて */
+            display: block; 
         }
         
         /* モーダル (ルール)CSS - 高級感のある紙質 */
@@ -282,7 +282,7 @@
     const suits = ['♠', '♥', '♦', '♣'];
     const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     
-    // 難易度と初期チップのマッピング (最終調整版)
+    // 難易度と初期チップのマッピング
     const difficultySettings = {
         '15': { chip: 1500, name: 'イージー' }, 
         '16': { chip: 500, name: 'ノーマル' },  
@@ -509,6 +509,11 @@
         let determinedStopValue = baseStopValue + winStreakBonus;
         if (determinedStopValue > 18) determinedStopValue = 18;
         
+        // ★難易度再調整ロジック: ノーマル難易度（16）選択時、25%の確率で16でもスタンドする
+        if (baseStopValue === 16 && Math.random() < 0.25) {
+             determinedStopValue = 16;
+        }
+
         // ランダム性追加: ストップ値に 0 または -1 の変動を加える
         let finalStopValue = determinedStopValue + (Math.random() < 0.5 ? -1 : 0); 
         if (finalStopValue < 14) finalStopValue = 14; 
